@@ -1,4 +1,4 @@
-function checkNNGradients(lambda)
+function checkNNGradients(lambda,X,y)
 %CHECKNNGRADIENTS Creates a small neural network to check the
 %backpropagation gradients
 %   CHECKNNGRADIENTS(lambda) Creates a small neural network to check the
@@ -12,9 +12,9 @@ if ~exist('lambda', 'var') || isempty(lambda)
     lambda = 0;
 end
 
-input_layer_size = 3;
-hidden_layer_size = 5;
-num_labels = 3;
+input_layer_size = 1;
+hidden_layer_size = 50;
+num_labels = 1;
 m = 5;
 
 % We generate some 'random' test data
@@ -23,6 +23,8 @@ Theta2 = debugInitializeWeights(num_labels, hidden_layer_size);
 % Reusing debugInitializeWeights to generate X
 X  = debugInitializeWeights(m, input_layer_size - 1);
 y  = 1 + mod(1:m, num_labels)';
+% X  = X(1:m,:);
+% y  = y(1:m,:);
 
 % Unroll parameters
 nn_params = [Theta1(:) ; Theta2(:)];

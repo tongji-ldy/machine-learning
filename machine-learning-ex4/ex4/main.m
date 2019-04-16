@@ -1,28 +1,45 @@
 %% Machine Learning - Neural Network
-%  神经网络matlab实现
+%  BP网络拟合函数matlab实现
 
 %% Initialization
 clear ; close all; clc
 
 %% Setup the parameters you will use for this exercise
-input_layer_size  = 400;  % 20x20 Input Images of Digits
-hidden_layer_size = 25;   % 25 hidden units
-num_labels = 10;          % 10 labels, from 1 to 10   
-                          % (note that we have mapped "0" to label 10)
+input_layer_size  = 1;    % 输入层神经元数量output_layer_size
+hidden_layer_size = 50;   % 隐含层神经元数量
+output_layer_size = 1;    % 输出层神经元数量
+trainRatio = 0.7;         % 训练集比例
+valRatio = 0.15;          % 验证集比例
+testRatio = 0.15;         % 测试集比例
 
 %% =========== Part 1: Loading Training Data =============
 
 % Load Training Data
+% 数据每一行为一组输入，共m组输入数据
 fprintf('Loading Training Data ...\n')
+load('data.mat');
+m = size(X, 1);
 
-load('data1.mat');
+%归一化数据
+[Xn, Xs] = mapminmax(X',0,1);
+[yn, ys] = mapminmax(y',0,1);
+Xn = Xn';
+yn = yn';
+
+%随机取训练集和测试集
+[trainInd, valInd, testInd] =dividerand(m,trainRatio,valRatio,testRatio);
+
+Xn_train = Xn(trainInd,:);
+yn_train = yn(trainInd,:);
+Xn_test = Xn(testInd,:);
+yn_test = yn(testInd,:);
 
 %% ================ Part 2: Initializing Pameters ================
 
 fprintf('\nInitializing Neural Network Parameters ...\n')
 
 initial_Theta1 = randInitializeWeights(input_layer_size, hidden_layer_size);
-initial_Theta2 = randInitializeWeights(hidden_layer_size, num_labels);
+initial_Theta2 = randInitializeWeights(hidden_layer_size, output_layer_size);
 
 % Unroll parameters
 initial_nn_params = [initial_Theta1(:) ; initial_Theta2(:)];
@@ -32,7 +49,7 @@ initial_nn_params = [initial_Theta1(:) ; initial_Theta2(:)];
 fprintf('\nChecking Backpropagation... \n');
 
 %  Check gradients by running checkNNGradients
-checkNNGradients;
+checkNNGradients(1,Xn,yn);
 
 fprintf('\nProgram paused. Press enter to continue.\n');
 pause;
@@ -41,51 +58,56 @@ pause;
 
 fprintf('\nTraining Neural Network... \n')
 
-%  After you have completed the assignment, change the MaxIter to a larger
-%  value to see how more training helps.
-options = optimset('MaxIter', 50);
+%  传播迭代次数
+options = optimset('MaxIter', 10000);
 
-%  You should also try different values of lambda
-lambda = 1;
+%  正则化参数
+lambda = 0;
 
 % Create "short hand" for the cost function to be minimized
 costFunction = @(p) nnCostFunction(p, ...
                                    input_layer_size, ...
                                    hidden_layer_size, ...
-                                   num_labels, X, y, lambda);
+                                   output_layer_size, Xn_train, yn_train, lambda);
 
-% Now, costFunction is a function that takes in only one argument (the
-% neural network parameters)
-[nn_params, cost] = fmincg(costFunction, initial_nn_params, options);
+%optimization method1:fmincg
+%[nn_params, cost] = fmincg(costFunction, initial_nn_params, options);
+
+%optimization method2:gradientDesent
+[nn_params, cost] = gradientDescent(costFunction, initial_nn_params, options);
 
 % Obtain Theta1 and Theta2 back from nn_params
 Theta1 = reshape(nn_params(1:hidden_layer_size * (input_layer_size + 1)), ...
                  hidden_layer_size, (input_layer_size + 1));
 
 Theta2 = reshape(nn_params((1 + (hidden_layer_size * (input_layer_size + 1))):end), ...
-                 num_labels, (hidden_layer_size + 1));
+                 output_layer_size, (hidden_layer_size + 1));
 
 fprintf('Program paused. Press enter to continue.\n');
 pause;
 
-%% ================= Part 5: Visualize Weights =================
-%  You can now "visualize" what the neural network is learning by 
-%  displaying the hidden units to see what features they are capturing in 
-%  the data.
+%% ================= Part 5: Implement Predict =================
 
-fprintf('\nVisualizing Neural Network... \n')
+pred = predict(Theta1, Theta2, Xn_test);
 
-displayData(Theta1(:, 2:end));
+pred = mapminmax('reverse',pred',ys);
 
-fprintf('\nProgram paused. Press enter to continue.\n');
-pause;
+%fprintf('\nTraining Set Accuracy: %f\n', mean(double(pred == y_test')) * 100);
 
-%% ================= Part 6: Implement Predict =================
-%  After training the neural network, we would like to use it to predict
-%  the labels. You will now implement the "predict" function to use the
-%  neural network to predict the labels of the training set. This lets
-%  you compute the training set accuracy.
+%% ================= Part 6: result analysis =================
 
-pred = predict(Theta1, Theta2, X);
+figure(1)
 
-fprintf('\nTraining Set Accuracy: %f\n', mean(double(pred == y)) * 100);
+plot(X(testInd,:), pred', 'r.')
+
+hold on
+
+plot(X(testInd,:), y(testInd,:),'.');
+
+legend('预测输出','期望输出')
+
+title('BP网络预测输出','fontsize',12)
+
+ylabel('函数输出','fontsize',12)
+
+xlabel('样本','fontsize',12)
