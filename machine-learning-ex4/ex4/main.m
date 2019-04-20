@@ -5,7 +5,7 @@
 clear ; close all; clc
 
 %% Setup the parameters you will use for this exercise
-input_layer_size  = 1;    % 输入层神经元数量output_layer_size
+input_layer_size  = 2;    % 输入层神经元数量
 hidden_layer_size = 50;   % 隐含层神经元数量
 output_layer_size = 1;    % 输出层神经元数量
 trainRatio = 0.7;         % 训练集比例
@@ -62,7 +62,7 @@ fprintf('\nTraining Neural Network... \n')
 options = optimset('MaxIter', 10000);
 
 %  正则化参数
-lambda = 0;
+lambda =0;
 
 % Create "short hand" for the cost function to be minimized
 costFunction = @(p) nnCostFunction(p, ...
@@ -71,10 +71,10 @@ costFunction = @(p) nnCostFunction(p, ...
                                    output_layer_size, Xn_train, yn_train, lambda);
 
 %optimization method1:fmincg
-%[nn_params, cost] = fmincg(costFunction, initial_nn_params, options);
+[nn_params, cost] = fmincg(costFunction, initial_nn_params, options);
 
 %optimization method2:gradientDesent
-[nn_params, cost] = gradientDescent(costFunction, initial_nn_params, options);
+%[nn_params, cost] = gradientDescent(costFunction, initial_nn_params, options);
 
 % Obtain Theta1 and Theta2 back from nn_params
 Theta1 = reshape(nn_params(1:hidden_layer_size * (input_layer_size + 1)), ...
@@ -92,17 +92,20 @@ pred = predict(Theta1, Theta2, Xn_test);
 
 pred = mapminmax('reverse',pred',ys);
 
-%fprintf('\nTraining Set Accuracy: %f\n', mean(double(pred == y_test')) * 100);
-
 %% ================= Part 6: result analysis =================
 
+%预期与实际结构对比图
 figure(1)
 
-plot(X(testInd,:), pred', 'r.')
+% plot(X(testInd,:), pred', 'r.')
+% plot3(X(testInd,1), X(testInd,2), pred', 'r.')
+plot(pred', ':og')
 
 hold on
 
-plot(X(testInd,:), y(testInd,:),'.');
+% plot(X(testInd,:), y(testInd,:),'.');
+% plot3(X(testInd,1), X(testInd,2), y(testInd,:),'.');
+plot(y(testInd,:),'-*');
 
 legend('预测输出','期望输出')
 
@@ -111,3 +114,25 @@ title('BP网络预测输出','fontsize',12)
 ylabel('函数输出','fontsize',12)
 
 xlabel('样本','fontsize',12)
+
+%预测误差
+error=pred'-y(testInd,:);
+
+figure(2)
+
+plot(error,'-*')
+
+title('BP网络预测误差','fontsize',12)
+
+ylabel('误差','fontsize',12)
+
+xlabel('样本','fontsize',12)
+
+figure(3)
+
+plot((y(testInd,:)-pred')./pred','-*');
+
+title('神经网络预测误差百分比')
+
+%误差总和
+fprintf('\nTraining sum Accuracy: %f\n', sum(abs(error)));

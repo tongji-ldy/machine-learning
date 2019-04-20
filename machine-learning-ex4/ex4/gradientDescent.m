@@ -9,7 +9,7 @@ else
 end
 
 %学习步长及设置精度
-alpha = 0.03;
+alpha = 0.01;
 error = 0.0001;
 
 for iter = 1:num_iters
