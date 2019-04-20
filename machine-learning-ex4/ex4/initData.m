@@ -7,4 +7,4 @@ y = 2*X(:,1).^2-X(:,2).^2;
 
 %plot3(X(:,1),X(:,2),y,'.');
 
-save('data','X','y');
+save('E:\matlab\ml_ex\machine-learning-ex4\ex4\data.mat','X','y');
